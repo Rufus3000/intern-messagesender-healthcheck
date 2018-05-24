@@ -6,7 +6,7 @@ namespace MessageSender.Model
 {
     class HealthStatus
     {
-        public bool DbStatus = true;
+        public string DbStatus { get; set; }
         public string Version { get; set; }
         public int ServerResponseStatus { get; set; }
         public List<WorkerStatus> WorkerList { get; set; }
