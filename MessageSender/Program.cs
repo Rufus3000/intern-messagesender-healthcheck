@@ -1,39 +1,69 @@
 ﻿using System;
-using System.Net;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using MessageSender.Model;
+using System.Net;
+using System.IO;
+using System.Timers;
 
 namespace MessageSender
 {
     class Program
     {
-        private static string adress = "https://10.0.1.221:9000/";
+        private static string adress;
+        private static string path;
+        private static int counter = 0;
+        private static IConfiguration Configuration { get; set; }
 
         static void Main(string[] args)
         {
+            var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("config.json", optional: false);
+            Configuration = builder.Build();
+            adress = $"{Configuration["configuration:adress"]}";
+            path = $"{Configuration["configuration:path"]}";
+
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-            HealthChecker();
+            Timer t = new Timer(3000);
+            t.Elapsed += Timerino;
+            t.Start();
+            
             Console.ReadKey();
         }
-        
+
+        private static void Timerino(object sender, EventArgs e) { HealthChecker(); } 
+
         public static void HealthChecker()
         {
             var health = HealthCheck.GetHealthStatus(adress);
-
+            StringWriter stringWriter = new StringWriter();
             if (health == null)
             {
-                Console.WriteLine("Connection failed");
+                stringWriter.WriteLine("Connection failed");
             }
             else
             {
-                Console.WriteLine("Response status: " + health.ServerResponseStatus);
-                Console.WriteLine("Version: " + health.Version);
-                Console.WriteLine("Is Db Connected: " + health.DbStatus);
+                stringWriter.WriteLine("Response status: " + health.ServerResponseStatus);
+                stringWriter.WriteLine("Version: " + health.Version);
+                stringWriter.WriteLine("Is Db Connected: " + health.DbStatus);
                 foreach (var worker in health.WorkerList)
                 {
-                    Console.WriteLine(worker.Name);
-                    Console.WriteLine(worker.Status);
+                    stringWriter.WriteLine(worker.Name);
+                    stringWriter.WriteLine(worker.Status);
                 }
             }
+
+            bool append = !(counter >= 4);
+
+            using (StreamWriter stream = new StreamWriter(path, append))
+            {
+                stream.Write(stringWriter.ToString());
+                stream.Close();
+            }
+            if(!append){ counter = 0; }
+            counter++;
+            Console.WriteLine(stringWriter);
         }
     }
 }

@@ -15,37 +15,43 @@ namespace MessageSender.Model
         {
             List<WorkerStatus> workers = new List<WorkerStatus>();
 
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(adress);
-            request.AllowAutoRedirect = false;
-            request.Accept = "application/xml";
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            int statusCode = (int)response.StatusCode;
+            try {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(adress);
+                request.AllowAutoRedirect = false;
+                request.Accept = "application/xml";
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                int statusCode = (int)response.StatusCode;
 
-            if (statusCode != 200)
-            {
-                return new HealthStatus() { ServerResponseStatus = statusCode };
-            };
-            Stream stream = response.GetResponseStream();
+                if (statusCode != 200)
+                {
+                    return new HealthStatus() { ServerResponseStatus = statusCode };
+                };
+                Stream stream = response.GetResponseStream();
 
-            XDocument doc;
-            doc = XDocument.Load(stream);
-            string xmlns = doc.Root.Attribute("xmlns").Value;
+                XDocument doc;
+                doc = XDocument.Load(stream);
+                string xmlns = doc.Root.Attribute("xmlns").Value;
 
+                
+                foreach (var worker in doc.Root.Element("{" + xmlns + "}Workers").Elements())
+                {
 
-            foreach (var worker in doc.Root.Element("{" + xmlns + "}Workers").Elements())
-            {
+                    workers.Add(new WorkerStatus() { Name = worker.Element("{" + xmlns + "}Name").Value, Status = worker.Element("{" + xmlns + "}Status").Value });
+                }
 
-                workers.Add(new WorkerStatus() { Name = worker.Element("{" + xmlns + "}Name").Value, Status = worker.Element("{" + xmlns + "}Status").Value });
+                return new HealthStatus()
+                {
+                    ServerResponseStatus = statusCode,
+                    Version = doc.Root.Element("{" + xmlns + "}Version").Value,
+                    DbStatus = doc.Root.Element("{" + xmlns + "}IsDbConnected").Value,
+                    WorkerList = workers
+
+                };
             }
-
-            return new HealthStatus()
+            catch
             {
-                ServerResponseStatus = statusCode,
-                Version = doc.Root.Element("{" + xmlns + "}Version").Value,
-                DbStatus = doc.Root.Element("{" + xmlns + "}IsDbConnected").Value,
-                WorkerList = workers
-
-                };      
+                return null;
+            }
         }
     }   
 }

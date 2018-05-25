@@ -1,0 +1,6 @@
+{
+  "configuration": {
+    "adress": "https://10.0.1.221:9000/",
+    "path": "logfile.txt"
+  }
+}
