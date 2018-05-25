@@ -5,6 +5,7 @@ using MessageSender.Model;
 using System.Net;
 using System.IO;
 using System.Timers;
+using System.Diagnostics;
 
 namespace MessageSender
 {
@@ -26,13 +27,13 @@ namespace MessageSender
 
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
             Timer t = new Timer(3000);
-            t.Elapsed += Timerino;
+            t.Elapsed += OnTimeEvent;
             t.Start();
             
             Console.ReadKey();
         }
 
-        private static void Timerino(object sender, EventArgs e) { HealthChecker(); } 
+        private static void OnTimeEvent(object sender, EventArgs e) { HealthChecker(); } 
 
         public static void HealthChecker()
         {
@@ -47,6 +48,7 @@ namespace MessageSender
                 stringWriter.WriteLine("Response status: " + health.ServerResponseStatus);
                 stringWriter.WriteLine("Version: " + health.Version);
                 stringWriter.WriteLine("Is Db Connected: " + health.DbStatus);
+                stringWriter.WriteLine("Response Time: " + health.ResponseTime);
                 foreach (var worker in health.WorkerList)
                 {
                     stringWriter.WriteLine(worker.Name);
@@ -54,8 +56,7 @@ namespace MessageSender
                 }
             }
 
-            bool append = !(counter >= 4);
-
+            bool append = !(counter >= 4); 
             using (StreamWriter stream = new StreamWriter(path, append))
             {
                 stream.Write(stringWriter.ToString());

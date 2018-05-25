@@ -9,6 +9,7 @@ namespace MessageSender.Model
         public string DbStatus { get; set; }
         public string Version { get; set; }
         public int ServerResponseStatus { get; set; }
+        public int ResponseTime { get; set; }
         public List<WorkerStatus> WorkerList { get; set; }
     }
 }
