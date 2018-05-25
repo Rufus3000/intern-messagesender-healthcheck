@@ -6,6 +6,8 @@ using System.Net;
 using System.IO;
 using System.Timers;
 using System.Diagnostics;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MessageSender
 {
@@ -15,6 +17,7 @@ namespace MessageSender
         private static string path;
         private static int counter = 0;
         private static IConfiguration Configuration { get; set; }
+        private static int[] avrRespTime = new int[10];
 
         static void Main(string[] args)
         {
@@ -49,6 +52,12 @@ namespace MessageSender
                 stringWriter.WriteLine("Version: " + health.Version);
                 stringWriter.WriteLine("Is Db Connected: " + health.DbStatus);
                 stringWriter.WriteLine("Response Time: " + health.ResponseTime);
+                avrRespTime[counter] = (health.ResponseTime);
+                if (counter == 9)
+                {
+                    stringWriter.WriteLine("Average Response Time: " + avrRespTime.Average());
+                }
+
                 foreach (var worker in health.WorkerList)
                 {
                     stringWriter.WriteLine(worker.Name);
@@ -56,13 +65,13 @@ namespace MessageSender
                 }
             }
 
-            bool append = !(counter >= 4); 
+            bool append = !(counter == 9); 
             using (StreamWriter stream = new StreamWriter(path, append))
             {
                 stream.Write(stringWriter.ToString());
                 stream.Close();
             }
-            if(!append){ counter = 0; }
+            if (!append) { counter = 0; }
             counter++;
             Console.WriteLine(stringWriter);
         }
