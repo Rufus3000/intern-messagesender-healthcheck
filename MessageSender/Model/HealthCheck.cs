@@ -26,7 +26,7 @@ namespace MessageSender.Model
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 sw.Stop();
 
-                int.TryParse(sw.Elapsed.ToString(), out responseTime);
+                responseTime = (int)sw.ElapsedMilliseconds;
                 int statusCode = (int)response.StatusCode;
 
                 if (statusCode != 200)

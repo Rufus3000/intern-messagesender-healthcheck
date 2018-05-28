@@ -5,7 +5,6 @@ using MessageSender.Model;
 using System.Net;
 using System.IO;
 using System.Timers;
-using System.Diagnostics;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -17,7 +16,7 @@ namespace MessageSender
         private static string path;
         private static int counter = 0;
         private static IConfiguration Configuration { get; set; }
-        private static int[] avrRespTime = new int[10];
+        private static List<int> avrRespTime = new List<int>();
 
         static void Main(string[] args)
         {
@@ -41,23 +40,24 @@ namespace MessageSender
         public static void HealthChecker()
         {
             var health = HealthCheck.GetHealthStatus(adress);
+            
             StringWriter stringWriter = new StringWriter();
             if (health == null)
             {
                 stringWriter.WriteLine("Connection failed");
             }
             else
-            {
+            { 
                 stringWriter.WriteLine("Response status: " + health.ServerResponseStatus);
                 stringWriter.WriteLine("Version: " + health.Version);
                 stringWriter.WriteLine("Is Db Connected: " + health.DbStatus);
                 stringWriter.WriteLine("Response Time: " + health.ResponseTime);
-                avrRespTime[counter] = (health.ResponseTime);
-                if (counter == 9)
-                {
-                    stringWriter.WriteLine("Average Response Time: " + avrRespTime.Average());
-                }
-
+                avrRespTime.Add(health.ResponseTime);
+                stringWriter.WriteLine("SMA: " + MovingAverage.SMA(avrRespTime, 3));
+                stringWriter.WriteLine("Average Response Time: " + avrRespTime.Average());
+                stringWriter.WriteLine("Max Response Time: " + avrRespTime.Max());
+                stringWriter.WriteLine("Min Response Time: " + avrRespTime.Min());
+  
                 foreach (var worker in health.WorkerList)
                 {
                     stringWriter.WriteLine(worker.Name);
